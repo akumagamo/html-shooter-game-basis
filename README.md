@@ -1,16 +1,16 @@
-# Shooter Game Basis
+# Basic Shooter Game
 ## Versionnumber 0.2.0 (2016-08-16) Alpha
 (***Documentation last update 2016-08-16 16:00***)  
 
-Basis for shooting game. 
+Basic shooter game. 
 ![Screenshot shooting black particles](https://raw.githubusercontent.com/akumagamo/html-shooter-game-basis/master/readme/screenshot_01.png "Screenshot Game Situation")  
   
-[Small playable demo](https://rawgit.com/akumagamo/jquery-plugin-tempgauge/master/demo.html)
+[Small playable demo](https://rawgit.com/akumagamo/html-basic-shooter-game/master/source/index.html)
 
 ## Features
 
 ### WIP
-
+* ReadMe / Documentation
 
 ### Current Features
 * Rendering
@@ -29,6 +29,19 @@ Basis for shooting game.
 
 ### Roadmap / Future Features
 * Code Seperation
+* cleanup render order, nicer display
+* Add Background
+  * parallax scrolling
+* Audio
+  * add Sound Effects
+  * add Background Music / ambient sounds
+* improve mobile experience
+  * manifest File
+  * localstorage
+* Loading screen
+* Performance Tests / Improvements
+* Start Button
+* Scoring Counter and Scoreboard
 * on Collision Particle "explode" and remove 
 * emit speed depences on press / holding show gauge
 
@@ -38,13 +51,13 @@ Basis for shooting game.
 ## Usage
 
 ## SourceControl Link & Information
-https://github.com/akumagamo/html-shooter-game-basis.git
+https://github.com/akumagamo/html-basic-shooter-game.git
 
 ## Documentation
 
 ### File / Folder Structure
 
-     +-+- html-shooter-game-basis
+     +-+- html-basic-shooter-game
        +-+- documents
        | +- jsdoc  (output directory for jsdoc script)
        +-+- logs (logfile default folder)
