@@ -49,6 +49,9 @@ Basic shooter game.
 * Start Button
 * Performance Tests / Improvements
 * on Collision Particle "explode" and remove 
+* Scoring
+  * Highscorelist
+* Mini Introduction to Gameplay
 
 ### Known Bugs
 * particles different speeds depence on the angle
