@@ -59,7 +59,7 @@ Basic shooter game.
 ## Usage
 
 ## SourceControl Link & Information
-https://github.com/akumagamo/html-basic-shooter-game.git
+https://github.com/akumagamo/html-shooter-game-basis.git
 
 ## Documentation
 
