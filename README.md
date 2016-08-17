@@ -11,24 +11,31 @@ Basic shooter game.
 
 ### WIP
 * ReadMe / Documentation
+* improve HUD Arrow
+
 
 ### Current Features
 * Rendering
   * HUD
-  * Arrow of Shootangle
+    * Power Gauge
+      * emit speed depending on touch hold
+      * holding show gauge
+      * Arrow of Shootangle
+    * Mini MessageBoard
+    * Scoring Counter and Scoreboard
   * particles
     * removing particles out of view
       * only if x-axis bigger than with (ignore y-axis)
+    * Gravity and Drag effect
+    * Bounce when hit the Ground
   * hitZones
     * changing color when Collision is detected
 * Create Random hitZones
 * TouchEvents
-  * Move / Start
-* Gravity and Drag effect
-* Bounce when hit the Ground
+  * Move / Start / End
 
 ### Roadmap / Future Features
-* Code Seperation
+* Code Seperation / Major Refactoring
 * cleanup render order, nicer display
 * Add Background
   * parallax scrolling
@@ -39,11 +46,10 @@ Basic shooter game.
   * manifest File
   * localstorage
 * Loading screen
-* Performance Tests / Improvements
+* Particles draw images
 * Start Button
-* Scoring Counter and Scoreboard
+* Performance Tests / Improvements
 * on Collision Particle "explode" and remove 
-* emit speed depences on press / holding show gauge
 
 ### Known Bugs
 * particles different speeds depence on the angle

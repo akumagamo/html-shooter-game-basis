@@ -4,8 +4,9 @@ console.info("Up and running!");
 
 const ENGINE_CONSTANTS = {
     RADIANT_0_DEGREES: 0,
-    RADIANT_90_DEGREES: Math.PI/2,
-    RADIANT_180_DEGREES: Math.PI,
+    RADIANT_90_DEGREES: 1/2 * Math.PI,
+    RADIANT_180_DEGREES: 1 * Math.PI,
+    RADIANT_270_DEGREES: 3/2 * Math.PI,
     RADIANT_360_DEGREES: 2 * Math.PI,
     BACKGROUND_COLOR: "white",
     RENDER_INTERVAL: 30
@@ -14,21 +15,22 @@ const ENGINE_CONSTANTS = {
 const AMBIENT_CONSTANTS = {
     HORIZONTAL_DRAG_QUOTIENT: 0.95, 
     VERTICAL_DRAG_QUOTIENT: -0.65,
-    GRAVITY: 0.02
+    GRAVITY: 0.1
 };
 
 const PARTICLE_CONSTANTS = {
     COLOR: "black",
     CLEAR_SIZE: 12,
     SIZE: 10,
-    MAX_PARTICLES: 20
+    MAX_PARTICLES: 20,
+    MAX_SPEED: 20
 };
 
 var Engine = {
     Events:{
         touchZones:[],
         createEventZones: function(){
-            const RADIUS = 100;
+            const RADIUS = 200;
             this.touchZones=[
                 {
                     name: "left top",
@@ -48,18 +50,19 @@ var Engine = {
                     y: Engine.height + Engine.border,
                     radius: RADIUS,
                     action: function(touch){
-                        const ARROW_LENGTH = 200;
+
+                        const ARROW_LENGTH = 150;
 
                         var angle = calculateAngleForVector(
                             touch.clientX - this.x,
                             touch.clientY - this.y
                         );
 
-                        var endPointX = Math.cos(angle) * ARROW_LENGTH;
-                        var endPointY = Engine.height + Engine.border - Math.sin(angle) * ARROW_LENGTH;
+                        Engine.HUD.arrowEndPointX = Math.cos(angle) * ARROW_LENGTH;
+                        Engine.HUD.arrowEndPointY = Engine.height + Engine.border - Math.sin(angle) * ARROW_LENGTH;
 
-                        var vectorX = endPointX - Engine.Particle.emitPoint.x;
-                        var vectorY = endPointY - Engine.Particle.emitPoint.y;
+                        var vectorX = Engine.HUD.arrowEndPointX - Engine.Particle.emitPoint.x;
+                        var vectorY = Engine.HUD.arrowEndPointY - Engine.Particle.emitPoint.y;
 
                         var minMultiplicator = Math.min(
                             Math.abs(vectorX),
@@ -69,19 +72,6 @@ var Engine = {
                         Engine.Particle.currentVector.x = vectorX / minMultiplicator;
                         Engine.Particle.currentVector.y = vectorY / minMultiplicator;
 
-                        Engine.drawLine(
-                                Engine.border, 
-                                Engine.height + Engine.border, 
-                                endPointX, 
-                                endPointY
-                        );
-                        Engine.drawArrow(
-                                Engine.border, 
-                                Engine.height + Engine.border, 
-                                endPointX, 
-                                endPointY, 
-                                true
-                        );  
                     } 
                 },
                 {
@@ -89,21 +79,27 @@ var Engine = {
                     x: Engine.width + Engine.border,
                     y: Engine.height + Engine.border,
                     radius: RADIUS,
-                    action: function(touch){
+                    action: function(touch, eventtype){
+                        Engine.PowerGauge.isLoading = true;
+                        Engine.Events.endTouchAction = this.endAction; 
+                    },
+                    endAction: function(){
                         Engine.Particle.emitParticle({
                             x: Engine.Particle.emitPoint.x + PARTICLE_CONSTANTS.SIZE * 2,
                             y: Engine.Particle.emitPoint.y - PARTICLE_CONSTANTS.SIZE * 2,
                             vectorX: Engine.Particle.currentVector.x,
                             vectorY: Engine.Particle.currentVector.y,
-                            speed: 5,
+                            speed: PARTICLE_CONSTANTS.MAX_SPEED * Math.abs(Engine.PowerGauge.value-1.1),
                             isRunning: true
-                        }); 
+                        });
+                        Engine.PowerGauge.isLoading = false; 
+                        Engine.PowerGauge.value = 1;
                     } 
                 }
             ];
         },
         isTouchInEventZone: function(touch){
-            const RADIUS = 100;
+            const RADIUS = 200;
             return this.touchZones.find(
                 z => {
                     return calculateVectorLength(
@@ -113,21 +109,44 @@ var Engine = {
             });
         },
         handleTouchEvents: function(event){
-            for(var idx = 0; idx < event.touches.length; idx++){
-                var touch = event.touches[idx];
-                var selectedZone = this.isTouchInEventZone(touch);
+             switch(event.type){
+                 case "touchstart":
+                 case "touchmove":
+                    if(Engine.Events.endTouchAction){
+                        delete Engine.Events.endTouchAction;
+                    }
+                    for(var idx = 0; idx < event.touches.length; idx++){
+                        var touch = event.touches[idx];
+                        var selectedZone = this.isTouchInEventZone(touch);
 
-                if(selectedZone){
-                    selectedZone.action(touch);
-                }
-            }
+                        if(selectedZone){
+                            selectedZone.action(touch);
+                        }
+                    }
+                    break;
+                case "touchend":
+                    if(Engine.Events.endTouchAction){
+                        Engine.Events.endTouchAction();
+                    } 
+                    break;
+             }
         }
     },
+    HUD: {
+        arrowEndPointX: 0,
+        arrowEndPointY: 0,
+        messageBoard: "",
+        score:0
+    },
+    PowerGauge:{
+        value: 0,
+        isLoading: false
+    },
     Particle:{
-        emitPoint: {x:0 , y:0},
+        emitPoint: {x:0, y:0},
         currentVector: {x:0, y:0}, 
         particles: [],
-        clearStoppedParticles: function(){
+        updateParticlesList: function(){
             this.particles = this.particles.filter(
                 p => p.isRunning 
             );
@@ -180,6 +199,72 @@ var Engine = {
         this.Particle.emitPoint.x = 0;
         this.Particle.emitPoint.y = this.height + this.border;
     },
+    _drawPowerGauge: function(){
+        const RADIUS = 150;
+        var x = this.width + this.border;
+        var y = this.height + this.border;
+
+        this.context.strokeStyle = "white";
+        this.context.lineWidth= 21;
+        this.context.beginPath();
+        this.context.arc(
+            x ,
+            y,
+            RADIUS ,
+            Math.PI, 
+            -Math.PI/2);
+        this.context.stroke();
+
+        if(Engine.PowerGauge.isLoading){
+            Engine.PowerGauge.value =
+            Engine.PowerGauge.value <= 0 ?
+            1 : Engine.PowerGauge.value - 0.05;
+
+            var powerGaugeGradient = this.context.createLinearGradient(x - RADIUS, y + RADIUS , x +  RADIUS, y - RADIUS);
+            powerGaugeGradient.addColorStop(0, 'rgb(28,   255, 54)');
+            powerGaugeGradient.addColorStop(0.5, 'rgb(0, 255, 0)');
+            powerGaugeGradient.addColorStop(0.75, 'rgb(255, 0, 0)');
+            powerGaugeGradient.addColorStop(1, 'rgb(255, 0, 0)');
+
+            this.context.strokeStyle = powerGaugeGradient;
+            this.context.lineCap = "round";
+            this.context.lineWidth= 20
+            this.context.beginPath();
+            
+            this.context.arc(
+                x,
+                y,
+                RADIUS ,
+                ENGINE_CONSTANTS.RADIANT_180_DEGREES, 
+                ENGINE_CONSTANTS.RADIANT_180_DEGREES + ENGINE_CONSTANTS.RADIANT_90_DEGREES * Math.abs(.99 - this.PowerGauge.value));
+
+            this.context.stroke();
+        }
+    },
+    _drawArrow: function(){
+        this.context.strokeStyle = "black";
+        this.context.lineWidth = 1;
+        Engine.drawLine(
+            Engine.border, 
+            Engine.height + Engine.border, 
+            Engine.HUD.arrowEndPointX, 
+            Engine.HUD.arrowEndPointY
+        );
+        Engine.drawArrow(
+            Engine.border, 
+            Engine.height + Engine.border, 
+            Engine.HUD.arrowEndPointX, 
+            Engine.HUD.arrowEndPointY, 
+            true
+        );  
+    },
+    _drawMessageBoard: function(){
+        this.context.font = "24px";
+        this.context.fillStyle = "black";
+        this.context.fillText(this.HUD.messageBoard, this.calculatedBorder+2, this.calculatedBorder + 10);
+        this.context.fillText(`Score: ${Engine.HUD.score}`, this.calculatedBorder, this.calculatedBorder + 20);
+        
+    },
     drawHud: function(){
         const RADIUS = 100;
 
@@ -188,22 +273,19 @@ var Engine = {
             this.border, 
             this.height + this.border, 
             RADIUS, 
-            ENGINE_CONSTANTS.RADIANT_0_DEGREES, 
-            -ENGINE_CONSTANTS.RADIANT_90_DEGREES, 
-            true
+            ENGINE_CONSTANTS.RADIANT_270_DEGREES, 
+            ENGINE_CONSTANTS.RADIANT_0_DEGREES
         );
         this.context.stroke();
 
-        this.context.beginPath();
-        this.context.arc(
-            this.width + this.border,
-            this.height + this.border,
-            RADIUS, 
-            -ENGINE_CONSTANTS.RADIANT_90_DEGREES, 
-            -ENGINE_CONSTANTS.RADIANT_180_DEGREES, 
-            true
-        );
-        this.context.stroke();
+        this._drawPowerGauge();
+
+        this._drawArrow();
+
+        this.context.strokeStyle = "black";
+
+        this.context.lineCap = "default";
+        this.context.lineWidth= 1;
 
         this.context.beginPath();
         this.context.rect(this.border, this.border, this.width, this.height);
@@ -211,6 +293,8 @@ var Engine = {
         this.context.beginPath();
         this.context.rect(0, 0, this.width + this.calculatedBorder, this.height + this.calculatedBorder);
         this.context.stroke();
+
+        this._drawMessageBoard();
     },
     drawParticle: function(x, y){
         this._drawFilledCircle(x, y, PARTICLE_CONSTANTS.SIZE, PARTICLE_CONSTANTS.COLOR);
@@ -268,10 +352,14 @@ var Engine = {
         this.context.lineTo( tox, toy );
         this.context.stroke();
     },
+    _clearCanvas: function(){
+        this.context.clearRect(0, 0, this.width + this.calculatedBorder, this.height + this.calculatedBorder);
+    },
     render: function(){
+        this._clearCanvas();
         this.drawHud();
         Helper.render();
-        this.Particle.clearStoppedParticles();
+        this.Particle.updateParticlesList();
         for(var idx = 0; idx < this.Particle.particles.length; idx++){
             var currentParticle = this.Particle.particles[idx];
             if(this.Particle.isOutOfView(currentParticle, 0, 0, this.width, this.height)){
@@ -282,7 +370,7 @@ var Engine = {
             currentParticle.x += currentParticle.vectorX * currentParticle.speed;
             currentParticle.y += currentParticle.vectorY * currentParticle.speed;
             currentParticle.vectorY += AMBIENT_CONSTANTS.GRAVITY;
-    
+
             if( currentParticle.y + currentParticle.vectorY > this.height - 5 ){
                 currentParticle.vectorX *= AMBIENT_CONSTANTS.HORIZONTAL_DRAG_QUOTIENT;
                 currentParticle.vectorY *= AMBIENT_CONSTANTS.VERTICAL_DRAG_QUOTIENT;
@@ -293,7 +381,8 @@ var Engine = {
                 this.Particle.stopParticle(currentParticle);
             }
 
-            this.drawParticle(currentParticle.x, currentParticle.y);        
+            this.drawParticle(currentParticle.x, currentParticle.y);
+            this.HUD.messageBoard = "x: " + currentParticle.x +" y: "+ currentParticle.y;        
             // TESTER
             Helper.wasZoneHit(currentParticle);
         }
@@ -337,16 +426,16 @@ var Helper = {
     wasZoneHit: function(particle){
         for(var idx=0; idx < this.hitZones.length; idx++){
             var hitZone = this.hitZones[idx];
-            var distance = PARTICLE_CONSTANTS.SIZE + Math.sqrt(2*Math.pow((hitZone.width/2),2));
-            
-            var vx = hitZone.x + hitZone.width/2 - particle.x;
-            var vy = hitZone.y + hitZone.width/2 - particle.y;
+            if(!hitZone.wasHit){
+                var distance = PARTICLE_CONSTANTS.SIZE + Math.sqrt(2*Math.pow((hitZone.width/2),2));
+                
+                var vx = hitZone.x + hitZone.width/2 - particle.x;
+                var vy = hitZone.y + hitZone.width/2 - particle.y;
 
-            if(calculateVectorLength(vx, vy)<= distance){
-                hitZone.wasHit = true;
-                console.info(" WAS HIT ");
-            }else{
-                console.info(" NO HIT ");
+                if(calculateVectorLength(vx, vy)<= distance){
+                    hitZone.wasHit = true;
+                    Engine.HUD.score++;
+                }    
             }
         }
     }
@@ -365,7 +454,6 @@ function convertRadiantToDegrees(radangleinradiant){
 }
 
 window.onload = function (){
-    console.info("what");
     var canvas = document.getElementById("canvas");
     var context = canvas.getContext("2d");
 
@@ -390,11 +478,18 @@ window.onload = function (){
 
     Engine.startRenderLoop();
 
-    document.addEventListener("touchstart", (e)=>{
+    canvas.addEventListener("touchstart", function (e){
+        console.info("TOUCH START");
         Engine.Events.handleTouchEvents(e);
     });
 
-     document.addEventListener("touchmove", (e)=>{
+    canvas.addEventListener("touchend", function (e){
+        console.info("TOUCH END");
+        Engine.Events.handleTouchEvents(e);
+    });
+
+    canvas.addEventListener("touchmove", function (e){
+         console.info("TOUCH MOVE");
         Engine.Events.handleTouchEvents(e);
     });
 };
