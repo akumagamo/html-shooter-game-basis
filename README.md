@@ -5,7 +5,7 @@
 Basic shooter game. 
 ![Screenshot shooting black particles](https://raw.githubusercontent.com/akumagamo/html-shooter-game-basis/master/readme/screenshot_01.png "Screenshot Game Situation")  
   
-[Small playable demo](https://rawgit.com/akumagamo/html-basic-shooter-game/master/source/index.html)
+[Small playable demo](https://rawgit.com/akumagamo/html-shooter-game-basis/master/source/index.html)
 
 ## Features
 
