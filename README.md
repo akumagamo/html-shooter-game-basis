@@ -1,6 +1,6 @@
 # Basic Shooter Game
-## Versionnumber 0.2.0 (2016-08-16) Alpha
-(***Documentation last update 2016-08-16 16:00***)  
+## Versionnumber 0.2.0 (2016-08-17) Alpha
+(***Documentation last update 2016-08-17 20:30***)  
 
 Basic shooter game. 
 ![Screenshot shooting black particles](https://raw.githubusercontent.com/akumagamo/html-shooter-game-basis/master/readme/screenshot_01.png "Screenshot Game Situation")  
@@ -12,7 +12,6 @@ Basic shooter game.
 ### WIP
 * ReadMe / Documentation
 * improve HUD Arrow
-
 
 ### Current Features
 * Rendering
@@ -53,6 +52,9 @@ Basic shooter game.
 
 ### Known Bugs
 * particles different speeds depence on the angle
+* Touchend on the left side emites also a particle
+* speeds dont match
+* sometimes high Gauge still has slow speed
 
 ## Usage
 
@@ -67,6 +69,8 @@ https://github.com/akumagamo/html-basic-shooter-game.git
        +-+- documents
        | +- jsdoc  (output directory for jsdoc script)
        +-+- logs (logfile default folder)
+       +-+- readme
+       | +- screenshot_01.png
        +-+- source
        | +- css
        | +-+- style.css
